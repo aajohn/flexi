@@ -1,0 +1,45 @@
+Attribute VB_Name = "Module2"
+Sub note1()
+    ActiveSheet.Shapes("Note1").Visible = True
+    ActiveSheet.Shapes("Note1B").Visible = True
+End Sub
+Sub note2()
+    ActiveSheet.Shapes("Note1").Visible = False
+    ActiveSheet.Shapes("Note1B").Visible = False
+    ActiveSheet.Shapes("Note2").Visible = True
+    ActiveSheet.Shapes("Note2B").Visible = True
+End Sub
+Sub note3()
+    ActiveSheet.Shapes("Note2").Visible = False
+    ActiveSheet.Shapes("Note2B").Visible = False
+    ActiveSheet.Shapes("Note3").Visible = True
+    ActiveSheet.Shapes("Note3B").Visible = True
+End Sub
+Sub note4()
+    ActiveSheet.Shapes("Note3").Visible = False
+    ActiveSheet.Shapes("Note3B").Visible = False
+    ActiveSheet.Shapes("Note4").Visible = True
+    ActiveSheet.Shapes("Note4B").Visible = True
+End Sub
+Sub note5()
+    ActiveSheet.Shapes("Note4").Visible = False
+    ActiveSheet.Shapes("Note4B").Visible = False
+    ActiveSheet.Shapes("Note5").Visible = True
+    ActiveSheet.Shapes("Note5B").Visible = True
+End Sub
+Sub note6()
+    ActiveSheet.Shapes("Note5").Visible = False
+    ActiveSheet.Shapes("Note5B").Visible = False
+    ActiveSheet.Shapes("Note6").Visible = True
+    ActiveSheet.Shapes("Note6B").Visible = True
+End Sub
+Sub note7()
+    ActiveSheet.Shapes("Note6").Visible = False
+    ActiveSheet.Shapes("Note6B").Visible = False
+    ActiveSheet.Shapes("Note7").Visible = True
+    ActiveSheet.Shapes("Note7B").Visible = True
+End Sub
+Sub note_finish()
+    ActiveSheet.Shapes("Note7").Visible = False
+    ActiveSheet.Shapes("Note7B").Visible = False
+End Sub

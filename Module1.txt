@@ -1,0 +1,412 @@
+Attribute VB_Name = "Module1"
+Declare Function apiShowWindow Lib "user32" Alias "ShowWindow" (ByVal hwnd As Long, ByVal nCmdShow As Long) As Long
+Global Const SW_MAXIMIZE = 3
+Sub SaveVBACode()
+    'This code Exports all VBA modules
+    Dim i As Integer
+    Dim mName As String
+    Dim Fname As String
+
+    With ThisWorkbook
+        For i = 1 To .VBProject.VBComponents.Count
+            If .VBProject.VBComponents(i).CodeModule.CountOfLines > 0 Then
+                mName = .VBProject.VBComponents(i%).CodeModule.Name
+
+                Fname = .Path & "\" & mName & ".txt"
+                .VBProject.VBComponents(mName).Export Fname
+            End If
+        Next i
+    End With
+
+End Sub
+Sub LaunchIE()
+Dim iExplorer
+Set iExplorer = CreateObject("InternetExplorer.Application")
+    iExplorer.navigate "https://np-dwpprdlb1.link5.gpn.gov.uk:4450/landing_page/"
+    apiShowWindow iExplorer.hwnd, SW_MAXIMIZE
+End Sub
+Sub Main()
+Attribute Main.VB_Description = "Macro recorded 05/08/2010 by MAinsworth"
+Attribute Main.VB_ProcData.VB_Invoke_Func = " \n14"
+
+Dim counter As String
+Dim ref As String
+Dim ColChar As String
+Dim ExportRange As String
+Dim ExportRangePaste As String
+Dim TargetFile As String
+Dim NewBook As Workbook
+Dim Wbook As String
+Dim NewWbook As String
+Dim NewFileName As String
+Dim Check As String
+Dim Lp As Integer
+Dim Emp
+Dim Msg
+Dim AddBlank
+Dim Standby As Integer
+
+counter = Sheets("Time Recording").Range("B5").Value        '2063
+
+Wbook = ActiveWorkbook.Name     'AAJ-FLEXI.xls
+    
+    ref = "P" & counter + 5     'cell P2068
+    
+    If Range(ref).Value = 0 Then    'check value in P2068, which contains sum of weeks hours in decimal
+        MsgBox "You have not entered any flexi-time data.", 16
+        Exit Sub
+    End If
+    
+    ref = "Q" & counter + 5      'cell Q2068
+    
+    If Range(ref).Value = 0 Then
+        MsgBox "You have not entered any time recording data.", 16
+        Exit Sub
+    End If
+    
+    ref = "P" & counter + 5         'cell P2068
+    
+    Check = "Q" & counter + 5      'cell Q2068
+    
+    If Range(Check).Value > Range(ref).Value Then
+        Msg = "The total hours for time recording is greater than the total flexi-time. " & vbLf & vbLf & "   Click OK to continue or Cancel to return"
+        Response = MsgBox(Msg, 49)
+        If Response = vbCancel Then Exit Sub
+    End If
+    
+    ref = "P" & counter + 5
+    
+    Check = "Q" & counter + 5
+    
+    If Range(ref).Value > Range(Check).Value Then
+        Check = Range("P" & counter + 5).Value - Range("Q" & counter + 5).Value
+        Msg = "The total hours for time recording is less than the total flexi-time. " & vbLf & vbLf & "  Click OK to continue and a blank line with " & Check & " hours will be added to the upload file." & vbLf & "  Click Cancel to return to the spreadsheet."
+        Response = MsgBox(Msg, 49)
+        If Response = vbCancel Then Exit Sub
+        AddBlank = 1
+    End If
+    
+    Application.ScreenUpdating = False
+    
+    Sheets("Export Template").Visible = True
+    Sheets("Export Template").Select
+    
+    WCDate = Day(Sheets("Time Recording").Range("A" & counter).Value) & MonthName(Month(Sheets("Time Recording").Range("A" & counter).Value)) & Year(Date)
+    
+    '"V12" = H:\
+    TargetFile = Workbooks(Wbook).Sheets("Time Recording").Range("V12").Value & "Timecard " & WCDate
+    
+    NewFileName = Application.GetSaveAsFilename(TargetFile, fileFilter:="CSV Files (*.csv), *.csv")
+    
+    If NewFileName <> "False" Then
+    
+        'Creates a new workbook. The new workbook becomes the active workbook.
+        'XlWBATemplate specifies type to create, xlWBATWorksheet is a WokSheet
+        Set NewBook = Workbooks.Add(XlWBATemplate.xlWBATWorksheet)
+        ActiveWorkbook.SaveAs Filename:=NewFileName
+        NewWbook = ActiveWorkbook.Name
+        Workbooks(Wbook).Sheets("Export Template").Copy before:=Workbooks(NewWbook).Sheets(1)
+        Workbooks(NewWbook).Sheets("export template").Name = WCDate
+        Application.DisplayAlerts = False
+        Workbooks(NewWbook).Sheets("Sheet1").Select
+        ActiveWindow.SelectedSheets.Delete
+        Application.DisplayAlerts = True
+For ColCount = 1 To 23                          'loop 23 times for col S to AQ
+    ColChar = Chr$(ColCount + 82)               'The Microsoft Excel CHR function returns the character based on the ASCII value
+                                                'ColChar = Chr$(83) = S
+        If ColCount = 9 Then ColChar = "AA"
+        If ColCount = 10 Then ColChar = "AB"
+        If ColCount = 11 Then ColChar = "AC"
+        If ColCount = 12 Then ColChar = "AD"
+        If ColCount = 13 Then ColChar = "AE"
+        If ColCount = 14 Then ColChar = "AF"
+        If ColCount = 15 Then ColChar = "AG"
+        If ColCount = 16 Then ColChar = "AH"
+        If ColCount = 17 Then ColChar = "AI"
+        If ColCount = 18 Then ColChar = "AJ"
+        If ColCount = 19 Then ColChar = "AK"
+        If ColCount = 20 Then ColChar = "AL"
+        If ColCount = 21 Then ColChar = "AO"
+        If ColCount = 22 Then ColChar = "AP"
+        If ColCount = 23 Then ColChar = "AQ"
+        
+        Workbooks(Wbook).Activate                       'wbook = AAJ-FLEXI.xls
+        
+        Check = 0
+        
+        For Lp = 0 To 4                                 'loop 4 times
+                ExportRange = ColChar & counter + Lp    'S2063, S2064, S2065, S2066, S2067
+                Check = Check + Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Value      '0
+        Next Lp
+            
+            If Check = 0 Then
+                Check = 0
+                GoTo Jump
+            End If
+            
+        ExportRange = ColChar & "5" & ":" & ColChar & "7" & "," & ColChar & counter & ":" & ColChar & counter + 4
+        Workbooks(Wbook).Sheets("Time Recording").Activate
+        Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Select
+            Selection.Copy
+        Workbooks(NewWbook).Sheets(WCDate).Activate
+        Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+            Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+        ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+
+Jump:
+
+Next ColCount
+
+        Workbooks(Wbook).Activate
+        ref = "AO" & counter + 5
+        If Workbooks(Wbook).Sheets("Time Recording").Range(ref).Value = 1 Then
+            Standby = 1
+            ExportRange = "AM5:AM7," & "AM" & counter & ":" & "AM" & counter + 4
+            Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Select
+            Selection.Copy
+            Workbooks(NewWbook).Sheets(WCDate).Activate
+            Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+            Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+            ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+                ref = "AN" & counter + 5
+                If Workbooks(Wbook).Sheets("Time Recording").Range(ref).Value > 0 Then
+                ExportRange = "AN5:AN7," & "AN" & counter & ":" & "AN" & counter + 4
+                Workbooks(Wbook).Activate
+                Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Select
+                Selection.Copy
+                Workbooks(NewWbook).Sheets(WCDate).Activate
+                Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+                Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+                ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+                End If
+        End If
+        ref = "AO" & counter + 6
+        If Workbooks(Wbook).Sheets("Time Recording").Range(ref).Value = 1 Then
+            Standby = 1
+            Workbooks(Wbook).Activate
+            Workbooks(Wbook).Sheets("Time Recording").Range("AM5,AM6,AM8").Select
+            Selection.Copy
+            Workbooks(NewWbook).Activate
+            Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+            Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+            ExportRange = "AM" & counter + 5 & ":" & "AM" & counter + 6
+            Workbooks(Wbook).Activate
+            Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Select
+            Selection.Copy
+            Workbooks(NewWbook).Activate
+            Workbooks(NewWbook).Sheets(WCDate).Range("I30").Select
+            Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+            ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+                ref = "AN" & counter + 5
+                If Workbooks(Wbook).Sheets("Time Recording").Range(ref).Value > 0 Then
+                Workbooks(Wbook).Activate
+                Workbooks(Wbook).Sheets("Time Recording").Range("AN5:AN7").Select
+                Selection.Copy
+                Workbooks(NewWbook).Activate
+                Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+                Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+                ExportRange = "AN" & counter + 5 & ":" & "AN" & counter + 6
+                Workbooks(Wbook).Activate
+                Workbooks(Wbook).Sheets("Time Recording").Range(ExportRange).Select
+                Selection.Copy
+                Workbooks(NewWbook).Activate
+                Workbooks(NewWbook).Sheets(WCDate).Range("I30").Select
+                Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=True
+                ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+                End If
+        End If
+        If Standby = 1 Then
+            MsgBox "You have entered time for Standby" & vbLf & vbLf & "When you uploaded your file to 1B1S you need to;  " & vbLf & " - Enter 1 in the Units column for the Standby .... (UNITS)." & vbLf & " - Add or Correct Standby hours for Bank Holidays and Christmas ", vbExclamation
+        End If
+    If AddBlank = 1 Then
+            For Lp = 0 To 4
+                Workbooks(Wbook).Activate
+                Workbooks(Wbook).Sheets("Time Recording").Select
+                Check = Range("P" & counter + Lp).Value - Range("Q" & counter + Lp).Value
+                ref = Chr$(68 + Lp) & "30"
+                    Workbooks(NewWbook).Activate
+                    Workbooks(NewWbook).Sheets(WCDate).Range(ref).Value = Check
+            Next Lp
+        Workbooks(NewWbook).Activate
+        Workbooks(NewWbook).Sheets(WCDate).Range("A30").Select
+        ActiveCell.EntireRow.Insert Shift:=xlShiftDown
+    End If
+        Workbooks(NewWbook).Activate
+            Rows("30:30").Select
+            Selection.Delete Shift:=xlUp
+        Columns("D:D").Select
+        'Range("D25").Activate
+        Selection.Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+        Range("D29").Select
+        ActiveCell.FormulaR1C1 = "Hours Type"
+        Application.DisplayAlerts = False
+        ActiveWorkbook.SaveAs Filename:=NewWbook, FileFormat:=xlCSV
+        Application.DisplayAlerts = True
+        ActiveWorkbook.Close savechanges:=False
+            Workbooks(Wbook).Activate
+            ActiveWorkbook.Save
+    MsgBox "FINISHED !" & vbLf & vbLf & "File " & NewFileName & " has been created " & vbLf & "and is ready for import to 1B1S." & vbLf & "This spreadsheet has also been saved" & vbLf & vbLf & "Click OK to Launch 1B1S", vbInformation
+    Call MoveButtons(Wbook, counter)
+        Sheets("export template").Visible = False
+        ref = "C" & counter
+        Application.ScreenUpdating = True
+        ActiveWorkbook.Sheets("Time Recording").Range(ref).Select
+    Call LaunchIE
+    Else
+        Sheets("export template").Visible = False
+        ref = "C" & counter
+        Application.ScreenUpdating = True
+        ActiveWorkbook.Sheets("Time Recording").Range(ref).Select
+        MsgBox "Time Recording export file has not been created.", vbExclamation
+    End If
+End Sub
+Sub MoveButtons(Wbook, counter)
+Dim x, y, ref, val
+    Workbooks(Wbook).Sheets("Time Recording").Activate
+ActiveSheet.Unprotect
+    ActiveSheet.Shapes("Upload").Select
+        Selection.Cut
+        ref = "R" & counter + 13
+        ActiveSheet.Range(ref).Select
+        Selection.PasteSpecial Paste:=xlPasteAll
+            Selection.Name = "Upload"
+            ActiveSheet.Shapes("Upload").Select
+            Selection.OnAction = "Main"
+        ActiveSheet.Shapes("Standby3").Select
+        Selection.Cut
+        ref = "Z" & counter + 13
+        ActiveSheet.Range(ref).Select
+        Selection.PasteSpecial Paste:=xlPasteAll
+            Selection.Name = "Standby3"
+            ActiveSheet.Shapes("Standby3").Select
+            Selection.OnAction = "StandbyAdd"
+        ref = "S" & counter + 5
+        ActiveSheet.Range(ref).Value = "1B1S Upload file created on " & Date
+    ref = counter + 8
+    Sheets("Time Recording").Range("B5").Value = ref
+Rows(ref + 24 & ":" & ref + 31).Select
+    Selection.Copy
+Rows(ref + 32).Select
+    ActiveSheet.Paste
+Range("C" & ref + 32 & ":" & "D" & ref + 36) = ""
+Range("F" & ref + 32 & ":" & "H" & ref + 36) = ""
+Range("S" & ref + 32 & ":" & "AH" & ref + 36) = ""
+Range("A" & ref + 32) = Range("A" & ref + 24) + 7
+Range("G" & ref + 5 & ":N" & ref + 6).Select
+    Selection.Copy
+Range("G" & ref + 37).Select
+    ActiveSheet.Paste
+Application.CutCopyMode = False
+Range("N" & ref + 30) = Range("F13")
+Range("N" & ref + 30).Select
+If ref > 63 Then
+    Rows(ref - 56 & ":" & ref - 49).Select
+    Selection.EntireRow.Hidden = True
+End If
+If ref > 104 Then
+    x = ref - 104
+Else
+    x = 15
+End If
+For z = 19 To 38
+    val = 0
+    For y = x To ref - 1
+    On Error Resume Next
+        val = val + Cells(y, z).Value
+    Next y
+    Cells(1, z) = val
+Next z
+On Error GoTo 0
+ActiveSheet.Protect
+End Sub
+Sub ButtonUndo()
+ActiveSheet.Unprotect
+counter = Sheets("Time Recording").Range("B5").Value
+    If counter < 16 Then GoTo Jump
+        ref = "S" & counter - 3
+        ActiveSheet.Range(ref).Value = ""
+    ActiveSheet.Shapes("Upload").Select
+        Selection.Cut
+        ref = "R" & counter - 3
+        ActiveSheet.Range(ref).Select
+        Selection.PasteSpecial Paste:=xlPasteAll
+            Selection.Name = "Upload"
+            ActiveSheet.Shapes("Upload").Select
+            Selection.OnAction = "Main"
+        ActiveSheet.Shapes("Standby3").Select
+        Selection.Cut
+        ref = "Z" & counter - 3
+        ActiveSheet.Range(ref).Select
+        Selection.PasteSpecial Paste:=xlPasteAll
+            Selection.Name = "Standby3"
+            ActiveSheet.Shapes("Standby3").Select
+            Selection.OnAction = "StandbyAdd"
+    ref = counter - 8
+    Sheets("Time Recording").Range("B5").Value = ref
+    ActiveSheet.Range("C" & Range("B5").Value).Select
+Jump:
+ActiveSheet.Protect
+End Sub
+Sub StandbyDo()
+Dim StandbyRange As String
+Dim counter As String
+ActiveSheet.Unprotect
+counter = Sheets("Time Recording").Range("B5").Value
+Columns("AG:AH").Select
+Selection.EntireColumn.Hidden = False
+    ActiveSheet.Shapes("Standby").Select
+    Selection.OnAction = "StandbyDont"
+        ActiveSheet.Shapes("Standby2").Select
+        Selection.Copy
+        StandbyRange = "Y" & counter + 5
+        ActiveSheet.Range(StandbyRange).Select
+        Selection.PasteSpecial Paste:=xlPasteAll
+            Selection.Name = "Standby3"
+    ActiveSheet.Shapes("Standby3").Select
+    Selection.OnAction = "StandbyAdd"
+        ActiveSheet.Range("S9").Value = 1
+    ActiveSheet.Range("C" & Range("B5").Value).Select
+    ActiveSheet.Protect
+End Sub
+Sub StandbyDont()
+ActiveSheet.Unprotect
+Columns("AG:AH").Select
+Selection.EntireColumn.Hidden = True
+    ActiveSheet.Shapes("Standby").Select
+    Selection.OnAction = "StandbyDo"
+        ActiveSheet.Shapes("Standby3").Select
+        Selection.Delete
+        ActiveSheet.Range("S9").Value = 0
+    ActiveSheet.Range("C" & Range("B5").Value).Select
+ActiveSheet.Protect
+End Sub
+Sub StandbyAdd()
+Dim ref As String
+Dim counter As String
+Dim Lp As Integer
+counter = Sheets("Time Recording").Range("B5").Value
+For Lp = 1 To 8
+    If Lp <> 7 Then
+    ref = "AM" & counter + Lp
+    ActiveSheet.Range(ref).Value = 0
+    End If
+Next Lp
+End Sub
+Sub tDay()
+Dim Count, Check, lastrow
+Count = 15
+Check = False
+lastrow = Sheets("Time Recording").Cells(Rows.Count, "A").End(xlUp).Row
+Do
+    If Format(Range("A" & Count).Value, "dd mm yyyy") = Format(Date, "dd mm yyyy") Then Check = True
+    Count = Count + 1
+    If Count = lastrow Then
+        Check = True: Count = 15
+    End If
+Loop Until Check = True
+If IsEmpty(Range("C" & Count)) Then
+    Range("C" & Count).Select
+Else
+    Range("D" & Count).Select
+End If
+End Sub

@@ -1,0 +1,22 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisWorkbook"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Private Sub Workbook_Open()
+Sheets("Time Recording").Select
+    If Not Range("G5") = Environ("Username") Then
+    Call note1
+    ActiveSheet.Unprotect
+    Range("G5") = Environ("Username")
+    End If
+    ActiveSheet.Protect
+    Call tDay
+End Sub
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+ActiveWorkbook.Save
+End Sub
